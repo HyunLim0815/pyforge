@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PRD Validation: PyForge</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+
+    --grade-exc: #16a34a;
+    --grade-good: #65a30d;
+    --grade-fair: #d97706;
+    --grade-poor: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .grade {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .grade-excellent { background: var(--grade-exc); }
+  .grade-good { background: var(--grade-good); }
+  .grade-fair { background: var(--grade-fair); }
+  .grade-poor { background: var(--grade-poor); }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>PyForge — Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/prds/prd-pyforge-2026-05-29/prd.md</div>
+      </div>
+      <div class="grade grade-fair">FAIR</div>
+    </header>
+
+    <div class="synthesis">
+      <p>PyForge PRD 在<strong>产品定位</strong>和<strong>边界定义</strong>方面表现出色——"uv 管依赖，PyForge 管项目"的 thesis 贯穿全文，竞品分析扎实，CLI 接口设计完整。但 PRD 在<strong>可测试性</strong>和<strong>决策透明度</strong>方面存在结构性缺口：FR 缺乏验收标准（critical），没有 Open Questions 章节，Success Metrics 不验证核心 thesis。</p>
+      <p>Adversarial 评审还揭示了更深层的问题——没有考虑 uv 自身可能填补这个空白、索引文件的竞态条件、以及 Python 项目识别标准的缺失。PRD 足以进入架构设计，但在投入开发前必须补上 FR 级别的验收标准。</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">Decision-readiness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Substance over theater</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Strategic coherence</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Done-ness clarity</div>
+        <div class="dim-verdict" style="color: var(--verdict-thin)">thin</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Scope honesty</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Downstream usability</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+    </div>
+
+    <!-- === Decision-readiness === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Decision-readiness</h2>
+          <span class="verdict-pill verdict-adequate">ADEQUATE</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>PRD 在定位决策上非常果断：第 9 节的"PyForge 明确不做"是清晰的 negative space 声明，第 1 节的竞品分析有数据支撑。优先级（P0/P1/P2）是显式的开发排序信号。</p>
+            <p>但决策背后看不到权衡的痕迹：Web 框架的选择（"tiny_http 或 axum"）暴露了未完成的架构决策；Python 版本检测机制未定义；没有 Open Questions 章节——v1 产品不可能没有任何未决问题。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">没有 Open Questions 章节</h3>
+              <span class="finding-location">全文</span>
+            </header>
+            <div class="finding-note">PRD 没有任何"未决问题"的集中表达。这隐藏了决策中的张力，让读者无法判断哪些是确定的、哪些是待定的。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加 Open Questions 章节，标记每项未决决策、Owner 和截止时间。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">技术选择仅有"或"无结论</h3>
+              <span class="finding-location">§7.1</span>
+            </header>
+            <div class="finding-note">"tiny_http 或 axum" 暴露了架构决策未完成。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 二选一并说明理由，或将此明确列为 Open Question。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">Python 版本检测机制未定义</h3>
+              <span class="finding-location">§8.1</span>
+            </header>
+            <div class="finding-note">展示了 python_version 字段但未说明如何获取。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确扫描策略（解析 pyproject.toml → 回退 python --version）。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Substance over theater === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Substance over theater</h2>
+          <span class="verdict-pill verdict-strong">STRONG</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>PRD 几乎没有"填充物"：6 个用户角色各具差异化场景，无冗余。竞争分析基于真实空白，定位原创性真实可信。Vision 语句具体且不可迁移到其他产品。</p>
+            <p>NFR 大部分有具体阈值（1000 目录 < 3s，< 8MB），但"安全性"和"可扩展性"缺乏产品特定的量化指标。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">LOW</span>
+              <h3 class="finding-title">NFR 中部分条目缺少阈值</h3>
+              <span class="finding-location">§10</span>
+            </header>
+            <div class="finding-note">"安全性"和"可扩展性"两项只有定性描述，没有量化指标。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 补充具体约束，如"仅接受本地请求，无认证要求"等。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Strategic coherence === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Strategic coherence</h2>
+          <span class="verdict-pill verdict-adequate">ADEQUATE</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>核心 thesis 明确：uv 管依赖，PyForge 管项目。特征演进（track → scan → info → new → web → 协作）遵循了自然顺序。</p>
+            <p>但 Success Metrics 不直接验证 thesis——下载量、Star 数、扫描速度是活动指标，而非 thesis 有效性指标。没有 counter-metrics 承认"又多了一个工具要学"的真实成本。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">Success Metrics 不验证核心 thesis</h3>
+              <span class="finding-location">§13</span>
+            </header>
+            <div class="finding-note">指标测的是"多少人用了"而非"用得好不好"。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加产品价值指标，如"周活跃用户平均查看项目数"。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">没有 counter-metrics</h3>
+              <span class="finding-location">§9, §13</span>
+            </header>
+            <div class="finding-note">"又多了一个要学的工具"是真实成本，未被承认。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加"学习成本"或"初次设置时间"作为负面指标。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Done-ness clarity (thin — open by default) === -->
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>Done-ness clarity</h2>
+          <span class="verdict-pill verdict-thin">THIN</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>这是 PRD 最薄弱的维度。F1-F37 全部是功能意图描述而非可验收的功能定义。没有一个 FR 包含"给定 X，执行 Y，应得到 Z"的验收条件。下游 Epics/Stories 无从知道"做完"的边界。</p>
+            <p>多处使用"详细信息""概览""分布"等未量化的名词。Web API 端点（§7.3）较好，但 /api/open（POST）的参数结构未定义。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">CRITICAL</span>
+              <h3 class="finding-title">几乎所有 FR 缺少验收标准</h3>
+              <span class="finding-location">§3</span>
+            </header>
+            <div class="finding-note">F1-F37 没有包含任何可验证的验收条件。下游无从知道"做完"的边界。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为每个 P0 FR 补充 1-2 个 Acceptance Criteria。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">模糊表述多处出现</h3>
+              <span class="finding-location">§3 (F4, F18, F21)</span>
+            </header>
+            <div class="finding-note">"详细信息""概览""分布"等未量化的名词。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 对每个模糊字段给出具体字段列表。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">"复用 uv"缺乏集成定义</h3>
+              <span class="finding-location">§9</span>
+            </header>
+            <div class="finding-note">多处提到"调用 uv init""复用 uv"，但没有定义调用路径。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确集成策略：采用 CLI 子进程调用 + 解析 stdout/stderr。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Scope honesty === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Scope honesty</h2>
+          <span class="verdict-pill verdict-adequate">ADEQUATE</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>§9 的"PyForge 明确不做"是教科书级的 negative space。优先级系统诚实地区分 P0/P1/P2。版本规划（§12）清晰定义了各版本的范围。</p>
+            <p>但 PRD 没有任何 `[ASSUMPTION]` 或 `[NON-GOAL for MVP]` 标注，也没有 Open Questions 章节。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">无假设标注</h3>
+              <span class="finding-location">§3, §6</span>
+            </header>
+            <div class="finding-note">多处未验证的推断（如社区会贡献语言包）没有标记为假设。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 添加 [ASSUMPTION: ...] 标注并建立 Assumptions Index。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">LOW</span>
+              <h3 class="finding-title">无 MVP 范围标记</h3>
+              <span class="finding-location">§3</span>
+            </header>
+            <div class="finding-note">FR 级别没有 [NON-GOAL for MVP] 标记。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 在 P1/P2 功能后添加标注以减少歧义。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Downstream usability === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Downstream usability</h2>
+          <span class="verdict-pill verdict-adequate">ADEQUATE</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>PRD 结构清晰、目录完整，每个章节可独立阅读。F 编号连续（F1-F37），跨章节引用一致。</p>
+            <p>主要不足：没有 Glossary——"脚手架""子包""跟踪"等术语从未正式定义。用户故事没有正式 UJ 编号，无法在 FR 中精确引用。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">缺少 Glossary</h3>
+              <span class="finding-location">全文</span>
+            </header>
+            <div class="finding-note">关键术语"子包""脚手架""跟踪"未定义，下游可产生歧义。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加 Glossary 章节，定义所有领域名词。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">LOW</span>
+              <h3 class="finding-title">用户故事无正式 ID</h3>
+              <span class="finding-location">§11</span>
+            </header>
+            <div class="finding-note">8 个故事使用无序数字列表，无法在 FR 或架构讨论中精确引用。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为每个用户故事分配 UJ1-UJ8 ID。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- === Shape fit === -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Shape fit</h2>
+          <span class="verdict-pill verdict-strong">STRONG</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>PyForge 是开发者工具（CLI + Web），采用能力规格（capability spec）形态非常合适——特征表格为主、用户故事为辅助示例。没有过度形式化，用户故事数量合理。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+        </div>
+      </details>
+    </section>
+
+    <!-- === Adversarial Review === -->
+    <section class="reviewer-section">
+      <details>
+        <summary>
+          <h2>Adversarial review</h2>
+          <span class="reviewer-source">review-adversarial.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>敌对性评审揭示了 PRD 作者可能回避的深层问题：竞争格局动态性（uv 可能进入同一领域）、文件系统并发安全、以及"Python 项目"这一基础概念的模糊性。这些问题是架构设计前必须解决的。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">CRITICAL</span>
+              <h3 class="finding-title">没有考虑 uv 的竞争反应</h3>
+              <span class="finding-location">§1, §9</span>
+            </header>
+            <div class="finding-note">PRD 假设 uv 永远只做依赖管理。uv 已发展成生态系统，完全可能在一年内增加项目索引功能。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确差异化策略或承认此风险。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">索引文件的竞态条件和数据一致性问题</h3>
+              <span class="finding-location">§7, §8</span>
+            </header>
+            <div class="finding-note">projects.json 可能被多个终端会话同时修改。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 使用文件锁或 SQLite。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">没有定义"Python 项目"的识别标准</h3>
+              <span class="finding-location">§3.1 F3</span>
+            </header>
+            <div class="finding-note">scan 命令依赖一个隐含分类器，边缘情况未处理。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确定义识别规则层级。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">HIGH</span>
+              <h3 class="finding-title">Web 看板是过度的分布式架构</h3>
+              <span class="finding-location">§3.5, §7</span>
+            </header>
+            <div class="finding-note">启动 HTTP 服务器远比 pyforge list 重。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 将 Web 看板降级为 P2。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">i18n 的优先级过高</h3>
+              <span class="finding-location">§3.7, §6</span>
+            </header>
+            <div class="finding-note">7 个 FR 分配给 i18n 且标记为 P1，而核心功能仍在 P1/P2。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 将完整 i18n 框架降到 v1.1+。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">MEDIUM</span>
+              <h3 class="finding-title">没有离线/降级策略</h3>
+              <span class="finding-location">§3, §7</span>
+            </header>
+            <div class="finding-note">模板获取方式、索引恢复流程等未定义。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确联网需求，确定模板分发策略。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">LOW</span>
+              <h3 class="finding-title">没有 Shell 补全的设计</h3>
+              <span class="finding-location">§4</span>
+            </header>
+            <div class="finding-note">开发者工具的 CLI 缺少 bash/zsh/fish 补全。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 在 CLI 设计阶段加入 Shell 补全支持。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">LOW</span>
+              <h3 class="finding-title">SKILL.md 分发机制假设过多</h3>
+              <span class="finding-location">附录 B</span>
+            </header>
+            <div class="finding-note">自动写入 AI 工具配置属于侵入性操作。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 改为安装时提示 + pyforge init-agent 手动命令。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li>F-ID 连续（F1-F37），无断号或重复</li>
+        <li>没有 Glossary 定义关键术语</li>
+        <li>没有 Assumptions Index</li>
+        <li>用户故事有角色名但无正式 UJ 编号</li>
+        <li>目录完整、跨章节引用一致</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: .claude/skills/bmad-prd/assets/prd-validation-checklist.md</span>
+        <span>Generated: 2026-05-29T12:00:00Z</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
