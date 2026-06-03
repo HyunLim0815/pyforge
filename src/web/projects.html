@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PyForge Projects</title>
+<style>
+:root{--bg:#0f172a;--card-bg:#1e293b;--border:#334155;--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;--accent:#38bdf8;--hover-bg:#263348}
+[data-theme="light"]{--bg:#f8fafc;--card-bg:#ffffff;--border:#e2e8f0;--text:#1e293b;--text-muted:#475569;--text-dim:#64748b;--accent:#0284c7;--hover-bg:#f1f5f9}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);padding:2rem;min-height:100vh;transition:background 0.2s,color 0.2s}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+h1{font-size:1.5rem;color:var(--accent)}
+.nav{display:flex;gap:1rem;align-items:center}
+.nav a{color:var(--text-muted);text-decoration:none;font-size:0.875rem;transition:color 0.15s}
+.nav a:hover{color:var(--accent)}
+.nav-btn{background:var(--card-bg);border:1px solid var(--border);color:var(--text);padding:0.4rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.875rem;transition:background 0.15s}
+.nav-btn:hover{background:var(--hover-bg)}
+.toolbar{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.toolbar input,.toolbar select{background:var(--card-bg);border:1px solid var(--border);color:var(--text);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.875rem;outline:none;transition:border-color 0.15s}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--accent)}
+.toolbar input{flex:1;min-width:200px}
+.toolbar select{min-width:140px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.card{background:var(--card-bg);border-radius:8px;padding:1.25rem;transition:border-color 0.2s,background 0.2s}
+.card:hover{border:1px solid var(--border)}
+.card h3{font-size:1rem;color:var(--text);margin-bottom:0.5rem;word-break:break-all}
+.card .path{font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem;word-break:break-all}
+.card .meta{display:flex;gap:0.75rem;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:500}
+.badge-toolchain{background:#1e3a5f;color:#38bdf8}
+.badge-version{background:#1e3a2f;color:#4ade80}
+.badge-git-clean{background:#1e3a2f;color:#4ade80}
+.badge-git-dirty{background:#3a2f1e;color:#fbbf24}
+.badge-git-none{background:#2d2d2d;color:var(--text-dim)}
+[data-theme="light"] .badge-toolchain{background:#e0f2fe;color:#0369a1}
+[data-theme="light"] .badge-version{background:#dcfce7;color:#166534}
+[data-theme="light"] .badge-git-clean{background:#dcfce7;color:#166534}
+[data-theme="light"] .badge-git-dirty{background:#fef3c7;color:#92400e}
+[data-theme="light"] .badge-git-none{background:#f1f5f9;color:#64748b}
+.count{color:var(--text-muted);font-size:0.875rem;margin-bottom:1rem}
+.empty{color:var(--text-dim);text-align:center;padding:3rem}
+</style>
+</head>
+<body>
+<div class="top-bar">
+<h1 data-i18n="projects.title">Projects</h1>
+<div class="nav">
+<a href="/" data-i18n="nav.dashboard">Dashboard</a>
+<a href="/dependencies" data-i18n="nav.dependencies">Dependencies</a>
+<button class="nav-btn" id="themeToggle" title="Toggle theme">Light</button>
+<button class="nav-btn" id="langToggle" title="Switch language">EN</button>
+</div>
+</div>
+<div class="toolbar">
+<input id="search" type="text" data-i18n="projects.search" placeholder="Search by name or path...">
+<select id="toolchain">
+<option value="" data-i18n="projects.all_toolchains">All Toolchains</option>
+</select>
+</div>
+<div id="count" class="count"></div>
+<div id="list"></div>
+<script src="/i18n.js"></script>
+<script>
+(function(){
+  // Theme
+  var saved_theme = localStorage.getItem('pyforge_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved_theme);
+  var themeBtn = document.getElementById('themeToggle');
+  themeBtn.addEventListener('click', function(){
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('pyforge_theme', next);
+    themeBtn.textContent = next === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+  });
+
+  // i18n
+  PyForgeI18n.initI18n();
+  themeBtn.textContent = saved_theme === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+
+  var I = PyForgeI18n;
+  var searchEl = document.getElementById('search');
+  var toolchainEl = document.getElementById('toolchain');
+  var countEl = document.getElementById('count');
+  var listEl = document.getElementById('list');
+  var timer = null;
+  var allProjects = [];
+
+  function loadProjects() {
+    fetch('/api/projects')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        allProjects = data;
+        populateToolchains(data);
+        render(data);
+      })
+      .catch(function(e){
+        listEl.innerHTML = '<p class="empty">' + I.t('projects.error') + e.message + '</p>';
+      });
+  }
+
+  loadProjects();
+  document.addEventListener('localeChanged', function(){ applyFilters(); });
+
+  function populateToolchains(data) {
+    // Clear existing options except the first "all" option
+    while (toolchainEl.options.length > 1) { toolchainEl.remove(1); }
+    var seen = {};
+    for (var i = 0; i < data.length; i++) {
+      var t = data[i].toolchain;
+      if (t && !seen[t]) {
+        seen[t] = true;
+        var opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        toolchainEl.appendChild(opt);
+      }
+    }
+  }
+
+  searchEl.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(applyFilters, 300);
+  });
+
+  toolchainEl.addEventListener('change', applyFilters);
+
+  function applyFilters() {
+    var q = searchEl.value.toLowerCase();
+    var toolchain = toolchainEl.value;
+    var filtered = allProjects.filter(function(p){
+      if (q && p.name.toLowerCase().indexOf(q) === -1 && p.path.toLowerCase().indexOf(q) === -1) return false;
+      if (toolchain && p.toolchain !== toolchain) return false;
+      return true;
+    });
+    render(filtered);
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+  }
+
+  function gitBadge(status) {
+    if (!status) return '<span class="badge badge-git-none">' + I.t('projects.no_git') + '</span>';
+    if (status === 'clean') return '<span class="badge badge-git-clean">' + I.t('projects.clean') + '</span>';
+    return '<span class="badge badge-git-dirty">' + escapeHtml(status) + '</span>';
+  }
+
+  function render(data) {
+    countEl.textContent = I.t('projects.count', {n: data.length});
+    if (data.length === 0) {
+      listEl.innerHTML = '<p class="empty">' + I.t('projects.empty') + '</p>';
+      return;
+    }
+    var html = '<div class="grid">';
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      html += '<div class="card">';
+      html += '<h3>' + escapeHtml(p.name) + '</h3>';
+      html += '<div class="path">' + escapeHtml(p.path) + '</div>';
+      html += '<div class="meta">';
+      if (p.toolchain) html += '<span class="badge badge-toolchain">' + escapeHtml(p.toolchain) + '</span>';
+      if (p.python_version) html += '<span class="badge badge-version">py ' + escapeHtml(p.python_version) + '</span>';
+      html += gitBadge(p.git_status);
+      html += '</div></div>';
+    }
+    html += '</div>';
+    listEl.innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PyForge Dashboard</title>
+<style>
+:root{--bg:#0f172a;--card-bg:#1e293b;--border:#334155;--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;--accent:#38bdf8;--bar-track:#334155;--hover-bg:#263348}
+[data-theme="light"]{--bg:#f8fafc;--card-bg:#ffffff;--border:#e2e8f0;--text:#1e293b;--text-muted:#475569;--text-dim:#64748b;--accent:#0284c7;--bar-track:#e2e8f0;--hover-bg:#f1f5f9}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);padding:2rem;min-height:100vh;transition:background 0.2s,color 0.2s}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+h1{font-size:1.5rem;color:var(--accent)}
+.nav{display:flex;gap:1rem;align-items:center}
+.nav a{color:var(--text-muted);text-decoration:none;font-size:0.875rem;transition:color 0.15s}
+.nav a:hover{color:var(--accent)}
+.nav-btn{background:var(--card-bg);border:1px solid var(--border);color:var(--text);padding:0.4rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.875rem;transition:background 0.15s}
+.nav-btn:hover{background:var(--hover-bg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem}
+.card{background:var(--card-bg);border-radius:8px;padding:1.5rem;transition:background 0.2s}
+.card h2{font-size:0.875rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem}
+.card .value{font-size:2.5rem;font-weight:700;color:var(--accent)}
+.bar-chart{display:flex;flex-direction:column;gap:0.5rem}
+.bar-row{display:flex;align-items:center;gap:0.5rem}
+.bar-label{min-width:80px;font-size:0.8rem;color:var(--text-muted);text-align:right}
+.bar-track{flex:1;height:20px;background:var(--bar-track);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.bar-value{min-width:36px;font-size:0.8rem;color:var(--text)}
+.project-list{list-style:none;max-height:240px;overflow-y:auto}
+.project-list li{padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.875rem;display:flex;justify-content:space-between;align-items:center}
+.project-list li:last-child{border-bottom:none}
+.project-name{color:var(--text)}
+.project-meta{color:var(--text-dim);font-size:0.75rem}
+.status{color:#4ade80;margin-bottom:1rem}
+.loading{color:var(--text-muted);font-style:italic}
+.error{color:#f87171}
+</style>
+</head>
+<body>
+<div class="top-bar">
+<h1 data-i18n="dashboard.title">PyForge Dashboard</h1>
+<div class="nav">
+<a href="/projects" data-i18n="nav.projects">Projects</a>
+<a href="/dependencies" data-i18n="nav.dependencies">Dependencies</a>
+<button class="nav-btn" id="themeToggle" title="Toggle theme">Light</button>
+<button class="nav-btn" id="langToggle" title="Switch language">EN</button>
+</div>
+</div>
+<div id="status" class="status" data-i18n="dashboard.status">Server is running</div>
+<div id="content"><p class="loading" data-i18n="dashboard.loading">Loading...</p></div>
+<script src="/i18n.js"></script>
+<script>
+(function(){
+  // Theme
+  var saved_theme = localStorage.getItem('pyforge_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved_theme);
+  var themeBtn = document.getElementById('themeToggle');
+  themeBtn.addEventListener('click', function(){
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('pyforge_theme', next);
+    themeBtn.textContent = next === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+  });
+
+  // i18n
+  PyForgeI18n.initI18n();
+  themeBtn.textContent = saved_theme === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+
+  var I = PyForgeI18n;
+  var contentEl = document.getElementById('content');
+  var statsData = null;
+
+  function loadStats() {
+    fetch('/api/stats')
+      .then(function(r){ return r.json(); })
+      .then(function(data){ statsData = data; render(data); })
+      .catch(function(e){
+        contentEl.innerHTML = '<p class="error">' + I.t('dashboard.error_stats') + e.message + '</p>';
+      });
+  }
+
+  loadStats();
+  document.addEventListener('localeChanged', function(){ if (statsData) render(statsData); });
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+  }
+
+  function render(data) {
+    var html = '';
+    html += '<div class="grid">';
+    html += '<div class="card"><h2>' + I.t('dashboard.total') + '</h2><div class="value">' + data.total + '</div></div>';
+    html += '<div class="card"><h2>' + I.t('dashboard.recent') + '</h2><div class="value">' + data.recent_active.length + '</div></div>';
+    html += '</div>';
+    html += '<div class="grid">';
+    html += '<div class="card"><h2>' + I.t('dashboard.version_dist') + '</h2>' + barChart(data.by_python_version, data.total) + '</div>';
+    html += '<div class="card"><h2>' + I.t('dashboard.toolchain_dist') + '</h2>' + barChart(data.by_toolchain, data.total) + '</div>';
+    html += '</div>';
+    html += '<div class="card"><h2>' + I.t('dashboard.recent_list') + '</h2>';
+    if (data.recent_active.length === 0) {
+      html += '<p style="color:var(--text-dim)">' + I.t('dashboard.no_recent') + '</p>';
+    } else {
+      html += '<ul class="project-list">';
+      for (var i = 0; i < data.recent_active.length; i++) {
+        var p = data.recent_active[i];
+        html += '<li><span class="project-name">' + escapeHtml(p.name) + '</span>';
+        html += '<span class="project-meta">' + escapeHtml(p.python_version || '?') + ' / ' + escapeHtml(p.toolchain || '?') + '</span></li>';
+      }
+      html += '</ul>';
+    }
+    html += '</div>';
+    contentEl.innerHTML = html;
+  }
+
+  function barChart(dist, total) {
+    if (total === 0) return '<p style="color:var(--text-dim)">' + I.t('dashboard.no_data') + '</p>';
+    var keys = Object.keys(dist).sort(function(a,b){ return dist[b] - dist[a]; });
+    var colors = ['#38bdf8','#818cf8','#a78bfa','#34d399','#fbbf24','#fb923c','#f87171'];
+    var html = '<div class="bar-chart">';
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var pct = Math.round(dist[k] / total * 100);
+      var color = colors[i % colors.length];
+      html += '<div class="bar-row">';
+      html += '<span class="bar-label">' + escapeHtml(k) + '</span>';
+      html += '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
+      html += '<span class="bar-value">' + dist[k] + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+})();
+</script>
+</body>
+</html>

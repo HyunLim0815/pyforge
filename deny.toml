@@ -1,0 +1,42 @@
+# cargo-deny 配置
+# 本 story (Story 0.1) 建立可执行的基线策略，
+# 严格规则将随 Epic 推进逐步收紧。
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+# yanked 的 crate 视为告警，不阻塞 v0.1.0 早期阶段。
+yanked = "warn"
+# 收到通知的漏洞默认 deny；如果出现误报需要单独 ignore，再在此追加 [advisories.ignore]。
+
+[licenses]
+version = 2
+# 仅允许常见 permissive / 双许可证；后续如需引入新许可证请显式追加。
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "0BSD",
+    "MPL-2.0",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+highlight = "all"
+
+[sources]
+# 仅信任 crates.io；若未来引入 git 依赖，应在此处显式 allow。
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

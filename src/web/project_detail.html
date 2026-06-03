@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PyForge Project Detail</title>
+<style>
+:root{--bg:#0f172a;--card-bg:#1e293b;--border:#334155;--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;--accent:#38bdf8;--hover-bg:#263348}
+[data-theme="light"]{--bg:#f8fafc;--card-bg:#ffffff;--border:#e2e8f0;--text:#1e293b;--text-muted:#475569;--text-dim:#64748b;--accent:#0284c7;--hover-bg:#f1f5f9}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);padding:2rem;min-height:100vh;transition:background 0.2s,color 0.2s}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+h1{font-size:1.5rem;color:var(--accent);word-break:break-all}
+.nav{display:flex;gap:1rem;align-items:center}
+.nav a{color:var(--text-muted);text-decoration:none;font-size:0.875rem;transition:color 0.15s}
+.nav a:hover{color:var(--accent)}
+.nav-btn{background:var(--card-bg);border:1px solid var(--border);color:var(--text);padding:0.4rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.875rem;transition:background 0.15s}
+.nav-btn:hover{background:var(--hover-bg)}
+.card{background:var(--card-bg);border-radius:8px;padding:1.5rem;margin-bottom:1rem;transition:background 0.2s}
+.card h2{font-size:0.875rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem}
+.field{display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.875rem}
+.field:last-child{border-bottom:none}
+.field-label{color:var(--text-muted)}
+.field-value{color:var(--text);text-align:right;word-break:break-all}
+.actions{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.btn{padding:0.625rem 1.25rem;border:none;border-radius:6px;font-size:0.875rem;font-weight:500;cursor:pointer;transition:opacity 0.2s}
+.btn:hover{opacity:0.85}
+.btn-dir{background:#38bdf8;color:#0f172a}
+.btn-terminal{background:#4ade80;color:#0f172a}
+.btn-vscode{background:#818cf8;color:#fff}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.toast{padding:0.75rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.875rem;display:none}
+.toast-success{background:#14532d;color:#4ade80}
+.toast-error{background:#450a0a;color:#f87171}
+.loading{color:var(--text-muted);font-style:italic}
+.error{color:#f87171}
+</style>
+</head>
+<body>
+<div class="top-bar">
+<h1 id="title" data-i18n="detail.loading">Loading...</h1>
+<div class="nav">
+<a href="/" data-i18n="nav.dashboard">Dashboard</a>
+<a href="/projects" data-i18n="nav.projects">Projects</a>
+<a href="/dependencies" data-i18n="nav.dependencies">Dependencies</a>
+<button class="nav-btn" id="themeToggle" title="Toggle theme">Light</button>
+<button class="nav-btn" id="langToggle" title="Switch language">EN</button>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+<div class="actions">
+<button id="btn-dir" class="btn btn-dir" disabled data-i18n="detail.open_dir">Open Directory</button>
+<button id="btn-terminal" class="btn btn-terminal" disabled data-i18n="detail.open_terminal">Open Terminal</button>
+<button id="btn-vscode" class="btn btn-vscode" disabled data-i18n="detail.open_vscode">Open in VS Code</button>
+</div>
+<div id="detail"><p class="loading" data-i18n="detail.loading_detail">Loading project details...</p></div>
+<script src="/i18n.js"></script>
+<script>
+(function(){
+  // Theme
+  var saved_theme = localStorage.getItem('pyforge_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved_theme);
+  var themeBtn = document.getElementById('themeToggle');
+  themeBtn.addEventListener('click', function(){
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('pyforge_theme', next);
+    themeBtn.textContent = next === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+  });
+
+  // i18n
+  PyForgeI18n.initI18n();
+  themeBtn.textContent = saved_theme === 'dark' ? PyForgeI18n.t('theme.light') : PyForgeI18n.t('theme.dark');
+
+  var I = PyForgeI18n;
+  var name = window.location.pathname.split('/').pop();
+  var titleEl = document.getElementById('title');
+  var detailEl = document.getElementById('detail');
+  var toastEl = document.getElementById('toast');
+  var btnDir = document.getElementById('btn-dir');
+  var btnTerminal = document.getElementById('btn-terminal');
+  var btnVscode = document.getElementById('btn-vscode');
+  var projectData = null;
+
+  titleEl.textContent = decodeURIComponent(name);
+
+  fetch('/api/projects/' + encodeURIComponent(name))
+    .then(function(r){
+      if (!r.ok) throw new Error(I.t('detail.error'));
+      return r.json();
+    })
+    .then(function(data){
+      projectData = data;
+      render(data);
+      btnDir.disabled = false;
+      btnTerminal.disabled = false;
+      btnVscode.disabled = false;
+    })
+    .catch(function(e){
+      titleEl.textContent = 'Error';
+      detailEl.innerHTML = '<p class="error">' + escapeHtml(e.message) + '</p>';
+    });
+
+  document.addEventListener('localeChanged', function(){ if (projectData) render(projectData); });
+
+  btnDir.addEventListener('click', function(){ doOpen('dir'); });
+  btnTerminal.addEventListener('click', function(){ doOpen('terminal'); });
+  btnVscode.addEventListener('click', function(){ doOpen('vscode'); });
+
+  function doOpen(action) {
+    toastEl.style.display = 'none';
+    fetch('/api/open', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: action, project: name})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.success) {
+        showToast(data.message, true);
+      } else {
+        showToast(data.error || 'Operation failed', false);
+      }
+    })
+    .catch(function(e){
+      showToast('Request failed: ' + e.message, false);
+    });
+  }
+
+  function showToast(msg, success) {
+    toastEl.textContent = msg;
+    toastEl.className = 'toast ' + (success ? 'toast-success' : 'toast-error');
+    toastEl.style.display = 'block';
+    setTimeout(function(){ toastEl.style.display = 'none'; }, 5000);
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+  }
+
+  function render(p) {
+    var html = '<div class="card"><h2>' + I.t('detail.info') + '</h2>';
+    var fields = [
+      ['detail.name', p.name],
+      ['detail.path', p.path],
+      ['detail.python_version', p.python_version],
+      ['detail.toolchain', p.toolchain],
+      ['detail.git_remote', p.git_remote],
+      ['detail.git_branch', p.git_branch],
+      ['detail.git_status', p.git_status],
+      ['detail.deps_count', p.deps_count],
+      ['detail.created', p.created_at],
+      ['detail.modified', p.last_modified],
+      ['detail.description', p.description]
+    ];
+    for (var i = 0; i < fields.length; i++) {
+      var val = fields[i][1];
+      if (val !== null && val !== undefined && val !== '') {
+        html += '<div class="field"><span class="field-label">' + I.t(fields[i][0]) + '</span>';
+        html += '<span class="field-value">' + escapeHtml(String(val)) + '</span></div>';
+      }
+    }
+    if (p.tags && p.tags.length > 0) {
+      html += '<div class="field"><span class="field-label">' + I.t('detail.tags') + '</span>';
+      html += '<span class="field-value">' + escapeHtml(p.tags.join(', ')) + '</span></div>';
+    }
+    html += '</div>';
+    detailEl.innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>
