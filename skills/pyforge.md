@@ -19,6 +19,7 @@ PyForge is a Python project management CLI tool built in Rust.
 - `info <NAME>` - Show project details
 - `new <NAME>` - Create new project (wraps uv init)
 - `mkpkg <PKG>...` - Create sub-packages
+- `goto <NAME>` - Open project directory in file manager
 - `status` - Show project status overview
 - `outdated [NAME]` - Check dependency updates
 - `web` - Start web dashboard (port 7742)
