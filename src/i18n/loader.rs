@@ -63,7 +63,7 @@ pub fn load_external_langs() -> Vec<(String, LangPack)> {
     let mut result = Vec::new();
     for entry in entries.flatten() {
         let path = entry.path();
-        if !path.extension().is_some_and(|e| e == "json") {
+        if path.extension().is_none_or(|e| e != "json") {
             continue;
         }
         let code = match path.file_stem().and_then(|s| s.to_str()) {
