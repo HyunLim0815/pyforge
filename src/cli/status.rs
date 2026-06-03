@@ -36,10 +36,7 @@ pub async fn handle(cli: &Cli, _args: &StatusArgs) -> Result<(), i32> {
     if projects.is_empty() {
         let msg = t!("status.empty");
         if cli.json {
-            println!(
-                "{}",
-                json::success(serde_json::json!({ "projects": [] }))
-            );
+            println!("{}", json::success(serde_json::json!({ "projects": [] })));
         }
         eprintln!("{}", msg);
         return Ok(());
@@ -100,7 +97,10 @@ pub async fn handle(cli: &Cli, _args: &StatusArgs) -> Result<(), i32> {
                 _ => "[ok]",
             };
             let modified = s.last_modified.as_deref().unwrap_or("-");
-            println!("{:<20} {:<10} {:<22} deps_outdated={}", s.name, status_icon, modified, s.deps_outdated);
+            println!(
+                "{:<20} {:<10} {:<22} deps_outdated={}",
+                s.name, status_icon, modified, s.deps_outdated
+            );
         }
     }
 
@@ -112,10 +112,7 @@ fn git_dirty_status(path: &PathBuf) -> String {
         Ok(repo) => {
             let mut opts = git2::StatusOptions::new();
             opts.include_untracked(false);
-            let count = repo
-                .statuses(Some(&mut opts))
-                .map(|s| s.len())
-                .unwrap_or(0);
+            let count = repo.statuses(Some(&mut opts)).map(|s| s.len()).unwrap_or(0);
             if count == 0 {
                 "clean".into()
             } else {
@@ -138,18 +135,31 @@ fn epoch_secs_to_iso8601(secs: u64) -> String {
     let mut remaining = days;
     loop {
         let days_in_year = if is_leap_year(y) { 366 } else { 365 };
-        if remaining < days_in_year { break; }
+        if remaining < days_in_year {
+            break;
+        }
         remaining -= days_in_year;
         y += 1;
     }
     let month_days: [u64; 12] = [
         31,
         if is_leap_year(y) { 29 } else { 28 },
-        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
     ];
     let mut mo = 1u64;
     for &md in &month_days {
-        if remaining < md { break; }
+        if remaining < md {
+            break;
+        }
         remaining -= md;
         mo += 1;
     }
@@ -162,12 +172,11 @@ fn is_leap_year(year: u64) -> bool {
 }
 
 fn modified_time(path: &PathBuf) -> Option<String> {
-    std::fs::metadata(path)
-        .ok()?
-        .modified()
-        .ok()
-        .map(|t| {
-            let secs = t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
-            epoch_secs_to_iso8601(secs)
-        })
+    std::fs::metadata(path).ok()?.modified().ok().map(|t| {
+        let secs = t
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        epoch_secs_to_iso8601(secs)
+    })
 }

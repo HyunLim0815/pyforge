@@ -6,8 +6,8 @@
 //! `#[allow(dead_code)]` 是因为本 story 仅定义接口与实现，
 //! 真正的调用方在 Epic 1 (track/list/scan 等) 中。
 
-pub mod types;
-pub mod store;
-pub mod error;
 pub mod detector;
+pub mod error;
 pub mod scanner;
+pub mod store;
+pub mod types;

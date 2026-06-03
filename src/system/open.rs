@@ -51,7 +51,13 @@ fn open_directory(path: &str) -> Result<(), String> {
         .arg(path)
         .status()
         .map_err(|e| format!("打开目录失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开目录失败".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开目录失败".into())
+            }
+        })
 }
 
 #[cfg(target_os = "linux")]
@@ -60,7 +66,13 @@ fn open_directory(path: &str) -> Result<(), String> {
         .arg(path)
         .status()
         .map_err(|e| format!("打开目录失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开目录失败".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开目录失败".into())
+            }
+        })
 }
 
 #[cfg(target_os = "windows")]
@@ -69,7 +81,13 @@ fn open_directory(path: &str) -> Result<(), String> {
         .arg(path)
         .status()
         .map_err(|e| format!("打开目录失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开目录失败".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开目录失败".into())
+            }
+        })
 }
 
 #[cfg(target_os = "macos")]
@@ -78,13 +96,24 @@ fn open_terminal(path: &str) -> Result<(), String> {
         .args(["-a", "Terminal", path])
         .status()
         .map_err(|e| format!("打开终端失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开终端失败".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开终端失败".into())
+            }
+        })
 }
 
 #[cfg(target_os = "linux")]
 fn open_terminal(path: &str) -> Result<(), String> {
     // 尝试常见终端模拟器
-    for terminal in &["x-terminal-emulator", "gnome-terminal", "konsole", "xfce4-terminal"] {
+    for terminal in &[
+        "x-terminal-emulator",
+        "gnome-terminal",
+        "konsole",
+        "xfce4-terminal",
+    ] {
         if Command::new(terminal)
             .args(["--working-directory", path])
             .status()
@@ -102,7 +131,13 @@ fn open_terminal(path: &str) -> Result<(), String> {
         .args(["/C", "start", "cmd", "/K", &format!("cd /d {}", path)])
         .status()
         .map_err(|e| format!("打开终端失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开终端失败".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开终端失败".into())
+            }
+        })
 }
 
 fn open_vscode(path: &str) -> Result<(), String> {
@@ -110,7 +145,13 @@ fn open_vscode(path: &str) -> Result<(), String> {
         .arg(path)
         .status()
         .map_err(|e| format!("打开 VS Code 失败: {}", e))
-        .and_then(|s| if s.success() { Ok(()) } else { Err("打开 VS Code 失败，请确认已安装 code 命令".into()) })
+        .and_then(|s| {
+            if s.success() {
+                Ok(())
+            } else {
+                Err("打开 VS Code 失败，请确认已安装 code 命令".into())
+            }
+        })
 }
 
 #[cfg(test)]

@@ -7,18 +7,18 @@
 
 mod agent_info;
 mod completion;
-mod i18n;
-mod track;
-mod list;
-mod scan;
-mod info;
-mod untrack;
 mod goto;
-mod new;
-mod mkpkg;
-mod status;
-mod outdated;
+mod i18n;
+mod info;
 mod init_agent;
+mod list;
+mod mkpkg;
+mod new;
+mod outdated;
+mod scan;
+mod status;
+mod track;
+mod untrack;
 mod web;
 
 use crate::output::OutputFormat;

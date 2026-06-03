@@ -36,7 +36,10 @@ pub fn handle(cli: &Cli, args: &ScanArgs) -> Result<(), i32> {
         return Err(1);
     }
 
-    eprintln!("{}", t!("scan.progress", args.directory.display().to_string()));
+    eprintln!(
+        "{}",
+        t!("scan.progress", args.directory.display().to_string())
+    );
     let projects = scanner::scan(&args.directory, args.depth);
 
     if projects.is_empty() {

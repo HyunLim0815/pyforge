@@ -31,12 +31,14 @@ pub struct Stats {
 pub async fn get_stats() -> Json<Stats> {
     let store = match JsonStore::load_or_create() {
         Ok(s) => s,
-        Err(_) => return Json(Stats {
-            total: 0,
-            by_python_version: HashMap::new(),
-            by_toolchain: HashMap::new(),
-            recent_active: Vec::new(),
-        }),
+        Err(_) => {
+            return Json(Stats {
+                total: 0,
+                by_python_version: HashMap::new(),
+                by_toolchain: HashMap::new(),
+                recent_active: Vec::new(),
+            })
+        }
     };
     let projects = store.list_projects();
 

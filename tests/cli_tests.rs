@@ -15,8 +15,20 @@ fn help_lists_all_commands() {
     let output = cmd.assert().success();
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
     for name in &[
-        "track", "untrack", "list", "scan", "info", "new", "mkpkg",
-        "goto", "status", "web", "agent-info", "init-agent", "completion", "outdated",
+        "track",
+        "untrack",
+        "list",
+        "scan",
+        "info",
+        "new",
+        "mkpkg",
+        "goto",
+        "status",
+        "web",
+        "agent-info",
+        "init-agent",
+        "completion",
+        "outdated",
     ] {
         assert!(stdout.contains(name), "help output missing: {}", name);
     }
@@ -38,7 +50,11 @@ fn unimplemented_prints_chinese() {
 #[test]
 fn track_project_success() {
     let dir = TempDir::new().unwrap();
-    fs::write(dir.path().join("pyproject.toml"), "[project]\nname = \"test\"\n").unwrap();
+    fs::write(
+        dir.path().join("pyproject.toml"),
+        "[project]\nname = \"test\"\n",
+    )
+    .unwrap();
     let index = dir.path().join("index.json");
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
@@ -78,7 +94,12 @@ fn track_with_name_override() {
     fs::write(dir.path().join("pyproject.toml"), "[project]\n").unwrap();
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
-    cmd.args(["track", &dir.path().display().to_string(), "--name", "my-api"]);
+    cmd.args([
+        "track",
+        &dir.path().display().to_string(),
+        "--name",
+        "my-api",
+    ]);
     cmd.assert().success().stderr(contains("my-api"));
 }
 
@@ -92,8 +113,14 @@ fn track_json_output() {
     cmd.args(["track", "--json", &dir.path().display().to_string()]);
     let output = cmd.assert().success();
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
-    assert!(stdout.contains("\"version\""), "json output missing version");
-    assert!(stdout.contains("\"success\""), "json output missing success");
+    assert!(
+        stdout.contains("\"version\""),
+        "json output missing version"
+    );
+    assert!(
+        stdout.contains("\"success\""),
+        "json output missing success"
+    );
 }
 
 // ── list 命令 ──
@@ -167,7 +194,9 @@ fn scan_finds_five_pyproject_projects_without_auto_track() {
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
     cmd.arg("scan").arg(dir.path());
-    cmd.assert().success().stdout(contains("发现 5 个 Python 项目"));
+    cmd.assert()
+        .success()
+        .stdout(contains("发现 5 个 Python 项目"));
 
     // scan 默认不注册；list 仍为空
     let mut list = Command::cargo_bin("pyforge").expect("binary built");
@@ -231,7 +260,9 @@ fn scan_depth_limit_and_empty() {
 
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.args(["scan", &dir.path().display().to_string(), "--depth", "2"]);
-    cmd.assert().success().stdout(contains("未发现 Python 项目"));
+    cmd.assert()
+        .success()
+        .stdout(contains("未发现 Python 项目"));
 }
 
 // ── info / untrack / goto 命令 ──
@@ -242,7 +273,11 @@ fn info_plain_and_json() {
     let index = dir.path().join("index.json");
     let p = dir.path().join("my-api");
     fs::create_dir(&p).unwrap();
-    fs::write(p.join("pyproject.toml"), "[project]\nrequires-python = \">=3.11\"\n").unwrap();
+    fs::write(
+        p.join("pyproject.toml"),
+        "[project]\nrequires-python = \">=3.11\"\n",
+    )
+    .unwrap();
     let mut track = Command::cargo_bin("pyforge").expect("binary built");
     track.env("PYFORGE_INDEX_PATH", &index);
     track.args(["track", &p.display().to_string(), "--name", "my-api"]);
@@ -395,7 +430,9 @@ fn lang_en_switches_to_english() {
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
     cmd.args(["--lang", "en", "info", "nonexistent"]);
-    cmd.assert().code(1).stderr(contains("Project not in index"));
+    cmd.assert()
+        .code(1)
+        .stderr(contains("Project not in index"));
 }
 
 #[test]
@@ -406,7 +443,9 @@ fn env_lang_en_switches_to_english() {
     cmd.env("PYFORGE_LANG", "en");
     cmd.env("PYFORGE_INDEX_PATH", &index);
     cmd.args(["info", "nonexistent"]);
-    cmd.assert().code(1).stderr(contains("Project not in index"));
+    cmd.assert()
+        .code(1)
+        .stderr(contains("Project not in index"));
 }
 
 #[test]
@@ -428,18 +467,36 @@ fn new_template_fastapi_creates_structure() {
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.current_dir(dir.path());
     cmd.env("PYFORGE_UV_MOCK", "success");
-    cmd.args(["new", "order-service", "--template", "fastapi", "--no-track"]);
+    cmd.args([
+        "new",
+        "order-service",
+        "--template",
+        "fastapi",
+        "--no-track",
+    ]);
     cmd.assert().success().stderr(contains("项目已创建"));
 
     let base = dir.path().join("order-service");
     assert!(base.join("app/main.py").exists(), "missing app/main.py");
-    assert!(base.join("app/routers/__init__.py").exists(), "missing app/routers/__init__.py");
-    assert!(base.join("app/models/__init__.py").exists(), "missing app/models/__init__.py");
-    assert!(base.join("tests/__init__.py").exists(), "missing tests/__init__.py");
+    assert!(
+        base.join("app/routers/__init__.py").exists(),
+        "missing app/routers/__init__.py"
+    );
+    assert!(
+        base.join("app/models/__init__.py").exists(),
+        "missing app/models/__init__.py"
+    );
+    assert!(
+        base.join("tests/__init__.py").exists(),
+        "missing tests/__init__.py"
+    );
 
     // 验证 {{name}} 已替换
     let main_py = fs::read_to_string(base.join("app/main.py")).unwrap();
-    assert!(main_py.contains("order-service"), "{{name}} not replaced in main.py");
+    assert!(
+        main_py.contains("order-service"),
+        "{{name}} not replaced in main.py"
+    );
 }
 
 #[test]
@@ -454,7 +511,10 @@ fn new_template_cli_creates_structure() {
     let base = dir.path().join("my-cli");
     assert!(base.join("src/main.py").exists(), "missing src/main.py");
     let main_py = fs::read_to_string(base.join("src/main.py")).unwrap();
-    assert!(main_py.contains("my-cli"), "{{name}} not replaced in cli template");
+    assert!(
+        main_py.contains("my-cli"),
+        "{{name}} not replaced in cli template"
+    );
 }
 
 #[test]
@@ -467,7 +527,10 @@ fn new_template_lib_creates_structure() {
     cmd.assert().success();
 
     let base = dir.path().join("my-lib");
-    assert!(base.join("src/__init__.py").exists(), "missing src/__init__.py");
+    assert!(
+        base.join("src/__init__.py").exists(),
+        "missing src/__init__.py"
+    );
     assert!(base.join("src/my-lib.py").exists(), "missing src/my-lib.py");
 }
 
@@ -499,7 +562,10 @@ fn new_template_custom_from_dir() {
     cmd.assert().success();
 
     let readme = fs::read_to_string(dir.path().join("foo/README.md")).unwrap();
-    assert!(readme.contains("# foo project"), "custom template {{name}} not replaced");
+    assert!(
+        readme.contains("# foo project"),
+        "custom template {{name}} not replaced"
+    );
 }
 
 // ── mkpkg 命令（Story 2.3）──
@@ -552,7 +618,10 @@ fn mkpkg_dry_run_does_not_write() {
     output.stderr(contains("dry-run"));
 
     // dry-run 不应创建任何文件
-    assert!(!dir.path().join("models").exists(), "dry-run should not create directories");
+    assert!(
+        !dir.path().join("models").exists(),
+        "dry-run should not create directories"
+    );
 }
 
 #[test]
@@ -605,8 +674,16 @@ fn status_shows_clean_and_dirty_and_missing() {
     ga.args(["add", "."]).current_dir(&clean_dir);
     ga.output().unwrap();
     let mut gc = Command::new("git");
-    gc.args(["-c", "user.email=t@t.com", "-c", "user.name=t", "commit", "-m", "init"])
-        .current_dir(&clean_dir);
+    gc.args([
+        "-c",
+        "user.email=t@t.com",
+        "-c",
+        "user.name=t",
+        "commit",
+        "-m",
+        "init",
+    ])
+    .current_dir(&clean_dir);
     gc.output().unwrap();
 
     // dirty 项目：git init + 有未提交文件
@@ -622,11 +699,23 @@ fn status_shows_clean_and_dirty_and_missing() {
     ga.args(["add", "."]).current_dir(&dirty_dir);
     ga.output().unwrap();
     let mut gc = Command::new("git");
-    gc.args(["-c", "user.email=t@t.com", "-c", "user.name=t", "commit", "-m", "init"])
-        .current_dir(&dirty_dir);
+    gc.args([
+        "-c",
+        "user.email=t@t.com",
+        "-c",
+        "user.name=t",
+        "commit",
+        "-m",
+        "init",
+    ])
+    .current_dir(&dirty_dir);
     gc.output().unwrap();
     // 修改文件使其 dirty
-    fs::write(dirty_dir.join("pyproject.toml"), "[project]\nname = \"changed\"\n").unwrap();
+    fs::write(
+        dirty_dir.join("pyproject.toml"),
+        "[project]\nname = \"changed\"\n",
+    )
+    .unwrap();
 
     // missing 项目：路径不存在
     let missing_path = dir.path().join("missing-proj");
@@ -743,7 +832,10 @@ fn outdated_displays_deps() {
     let (index, _p) = track_project_for_outdated(&dir);
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
-    cmd.env("PYFORGE_UV_MOCK", "outdated:fastapi:0.100.0:0.109.0,uvicorn:0.23.0:0.27.0");
+    cmd.env(
+        "PYFORGE_UV_MOCK",
+        "outdated:fastapi:0.100.0:0.109.0,uvicorn:0.23.0:0.27.0",
+    );
     cmd.arg("outdated");
     let output = cmd.assert().success();
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
@@ -815,20 +907,35 @@ fn outdated_json_output() {
 // ── 扩展集成测试 (P1/P2) ──
 
 /// 辅助：注册两个项目到索引
-fn track_two_projects_for_outdated(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
+fn track_two_projects_for_outdated(
+    dir: &TempDir,
+) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
     let index = dir.path().join("index.json");
 
     let p1 = dir.path().join("proj-outdated");
     fs::create_dir(&p1).unwrap();
-    fs::write(p1.join("pyproject.toml"), "[project]\nname = \"proj-outdated\"\n").unwrap();
+    fs::write(
+        p1.join("pyproject.toml"),
+        "[project]\nname = \"proj-outdated\"\n",
+    )
+    .unwrap();
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
-    cmd.args(["track", &p1.display().to_string(), "--name", "proj-outdated"]);
+    cmd.args([
+        "track",
+        &p1.display().to_string(),
+        "--name",
+        "proj-outdated",
+    ]);
     cmd.assert().success();
 
     let p2 = dir.path().join("proj-clean");
     fs::create_dir(&p2).unwrap();
-    fs::write(p2.join("pyproject.toml"), "[project]\nname = \"proj-clean\"\n").unwrap();
+    fs::write(
+        p2.join("pyproject.toml"),
+        "[project]\nname = \"proj-clean\"\n",
+    )
+    .unwrap();
     let mut cmd = Command::cargo_bin("pyforge").expect("binary built");
     cmd.env("PYFORGE_INDEX_PATH", &index);
     cmd.args(["track", &p2.display().to_string(), "--name", "proj-clean"]);
@@ -909,8 +1016,14 @@ fn outdated_json_uv_missing() {
     cmd.args(["outdated", "--json"]);
     let output = cmd.assert().code(1);
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
-    assert!(stdout.contains("\"UV_NOT_INSTALLED\""), "missing error code");
-    assert!(stdout.contains("\"success\":false"), "missing success:false");
+    assert!(
+        stdout.contains("\"UV_NOT_INSTALLED\""),
+        "missing error code"
+    );
+    assert!(
+        stdout.contains("\"success\":false"),
+        "missing success:false"
+    );
 }
 
 #[test]
@@ -923,8 +1036,14 @@ fn outdated_json_parse_error() {
     cmd.args(["outdated", "--json"]);
     let output = cmd.assert().code(2);
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
-    assert!(stdout.contains("\"UV_OUTDATED_ERROR\""), "missing error code");
-    assert!(stdout.contains("\"success\":false"), "missing success:false");
+    assert!(
+        stdout.contains("\"UV_OUTDATED_ERROR\""),
+        "missing error code"
+    );
+    assert!(
+        stdout.contains("\"success\":false"),
+        "missing success:false"
+    );
 }
 
 #[test]
@@ -940,7 +1059,10 @@ fn outdated_json_all_up_to_date() {
     assert!(stdout.contains("\"success\":true"), "missing success:true");
     assert!(stdout.contains("\"projects\""), "missing projects");
     // 全最新时 projects 数组不为空（包含项目，只是 outdated 为空）
-    assert!(stdout.contains("\"outdated\":[]"), "outdated should be empty array");
+    assert!(
+        stdout.contains("\"outdated\":[]"),
+        "outdated should be empty array"
+    );
 }
 
 #[test]
@@ -1004,7 +1126,10 @@ fn init_agent_writes_skill_md_and_copies_to_targets() {
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
     assert!(stdout.contains("\"results\""), "json missing results");
     // 至少有一个 target 被处理
-    assert!(stdout.contains("\"Claude Code\""), "missing Claude Code target");
+    assert!(
+        stdout.contains("\"Claude Code\""),
+        "missing Claude Code target"
+    );
     assert!(stdout.contains("\"Codex CLI\""), "missing Codex CLI target");
     assert!(stdout.contains("\"Windsurf\""), "missing Windsurf target");
 }
@@ -1023,7 +1148,10 @@ fn init_agent_json_output() {
     let stdout = String::from_utf8_lossy(&output.get_output().stdout);
     assert!(stdout.contains("\"version\""), "json missing version");
     assert!(stdout.contains("\"results\""), "json missing results");
-    assert!(stdout.contains("\"Claude Code\""), "json missing Claude Code target");
+    assert!(
+        stdout.contains("\"Claude Code\""),
+        "json missing Claude Code target"
+    );
 }
 
 #[test]
@@ -1054,10 +1182,18 @@ fn init_agent_skill_md_content_snapshot() {
     // 验证 SKILL.md 内容包含关键字段
     let content = include_str!("../skills/pyforge.md");
     assert!(content.contains("PyForge"), "missing PyForge title");
-    assert!(content.contains("agent-info"), "missing agent-info capability");
-    assert!(content.contains("init-agent"), "missing init-agent capability");
+    assert!(
+        content.contains("agent-info"),
+        "missing agent-info capability"
+    );
+    assert!(
+        content.contains("init-agent"),
+        "missing init-agent capability"
+    );
     // 验证所有命令都有文档
-    for cmd in &["track", "untrack", "list", "scan", "info", "new", "mkpkg", "goto", "status", "outdated"] {
+    for cmd in &[
+        "track", "untrack", "list", "scan", "info", "new", "mkpkg", "goto", "status", "outdated",
+    ] {
         assert!(content.contains(cmd), "SKILL.md missing command: {}", cmd);
     }
 }
@@ -1066,7 +1202,10 @@ fn init_agent_skill_md_content_snapshot() {
 fn skill_md_contains_capabilities() {
     // 快照测试：确保 SKILL.md 包含关键能力字段
     let content = include_str!("../skills/pyforge.md");
-    assert!(content.contains("agent-info"), "missing agent-info capability");
+    assert!(
+        content.contains("agent-info"),
+        "missing agent-info capability"
+    );
     assert!(content.contains("list"), "missing list capability");
     assert!(content.contains("scan"), "missing scan capability");
     assert!(content.contains("track"), "missing track capability");

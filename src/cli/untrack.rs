@@ -28,7 +28,10 @@ pub fn handle(cli: &Cli, args: &UntrackArgs) -> Result<(), i32> {
         Ok(()) => {
             let msg = t!("untrack.success", &args.name);
             if cli.json {
-                println!("{}", json::success(serde_json::json!({ "removed": args.name })));
+                println!(
+                    "{}",
+                    json::success(serde_json::json!({ "removed": args.name }))
+                );
             }
             eprintln!("{}", msg);
             Ok(())

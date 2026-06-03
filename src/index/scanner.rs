@@ -5,7 +5,14 @@
 use crate::index::detector::{self, Confidence};
 use std::path::{Path, PathBuf};
 
-const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__", ".venv", "venv"];
+const SKIP_DIRS: &[&str] = &[
+    ".git",
+    "node_modules",
+    "target",
+    "__pycache__",
+    ".venv",
+    "venv",
+];
 
 #[derive(Debug, Clone)]
 pub struct ScanResult {
@@ -65,9 +72,7 @@ fn should_skip(dir: &Path) -> bool {
 }
 
 fn is_python_project(dir: &Path) -> bool {
-    dir.join("pyproject.toml").exists()
-        || dir.join("setup.py").exists()
-        || has_python_file(dir)
+    dir.join("pyproject.toml").exists() || dir.join("setup.py").exists() || has_python_file(dir)
 }
 
 fn has_python_file(dir: &Path) -> bool {

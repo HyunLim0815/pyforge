@@ -55,7 +55,10 @@ fn parse_python_requires(project_path: &Path) -> Option<String> {
         if trimmed.starts_with("requires-python") {
             // 找到第一个 = 后的全部内容
             if let Some(pos) = trimmed.find('=') {
-                let val = trimmed[pos + 1..].trim().trim_matches('"').trim_matches('\'');
+                let val = trimmed[pos + 1..]
+                    .trim()
+                    .trim_matches('"')
+                    .trim_matches('\'');
                 if !val.is_empty() {
                     return Some(val.to_string());
                 }
@@ -91,7 +94,11 @@ mod tests {
     #[test]
     fn high_confidence_for_pyproject() {
         let dir = TempDir::new().unwrap();
-        fs::write(dir.path().join("pyproject.toml"), "[project]\nname = \"test\"\nrequires-python = \">=3.10\"\n").unwrap();
+        fs::write(
+            dir.path().join("pyproject.toml"),
+            "[project]\nname = \"test\"\nrequires-python = \">=3.10\"\n",
+        )
+        .unwrap();
         let d = detect(dir.path());
         assert_eq!(d.confidence, Confidence::High);
         assert_eq!(d.python_version.unwrap(), ">=3.10");

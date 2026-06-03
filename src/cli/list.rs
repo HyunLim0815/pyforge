@@ -31,7 +31,10 @@ pub fn handle(cli: &Cli) -> Result<(), i32> {
     }
 
     if cli.json {
-        println!("{}", json::success(serde_json::json!({ "projects": projects })));
+        println!(
+            "{}",
+            json::success(serde_json::json!({ "projects": projects }))
+        );
     } else {
         for p in &projects {
             println!("{}", t!("list.item", &p.name, &p.path));

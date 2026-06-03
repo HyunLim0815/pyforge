@@ -29,10 +29,12 @@ pub struct DependenciesResponse {
 pub async fn get_dependencies() -> Json<DependenciesResponse> {
     let store = match JsonStore::load_or_create() {
         Ok(s) => s,
-        Err(e) => return Json(DependenciesResponse {
-            dependencies: HashMap::new(),
-            error: Some(format!("索引加载失败: {}", e)),
-        }),
+        Err(e) => {
+            return Json(DependenciesResponse {
+                dependencies: HashMap::new(),
+                error: Some(format!("索引加载失败: {}", e)),
+            })
+        }
     };
     let projects = store.list_projects();
 
@@ -42,10 +44,7 @@ pub async fn get_dependencies() -> Json<DependenciesResponse> {
         let project_path = Path::new(&p.path);
         let deps = parse_project_deps(project_path);
         for dep_name in deps {
-            dep_map
-                .entry(dep_name)
-                .or_default()
-                .push(p.name.clone());
+            dep_map.entry(dep_name).or_default().push(p.name.clone());
         }
     }
 
@@ -104,7 +103,10 @@ fn parse_project_deps(project_path: &Path) -> Vec<String> {
             }
         }
         // optional-dependencies
-        if let Some(opts) = project.get("optional-dependencies").and_then(|v| v.as_table()) {
+        if let Some(opts) = project
+            .get("optional-dependencies")
+            .and_then(|v| v.as_table())
+        {
             for (_group, arr) in opts {
                 if let Some(arr) = arr.as_array() {
                     for item in arr {
@@ -194,11 +196,20 @@ mod tests {
     #[test]
     fn extract_dep_name_pep508() {
         assert_eq!(extract_dep_name("requests>=2.28"), Some("requests".into()));
-        assert_eq!(extract_dep_name("uvicorn[standard]"), Some("uvicorn".into()));
+        assert_eq!(
+            extract_dep_name("uvicorn[standard]"),
+            Some("uvicorn".into())
+        );
         assert_eq!(extract_dep_name("Django~=4.2"), Some("django".into()));
         assert_eq!(extract_dep_name("click !=8.0"), Some("click".into()));
-        assert_eq!(extract_dep_name("my-package>=1.0"), Some("my-package".into()));
-        assert_eq!(extract_dep_name("my_package>=1.0"), Some("my-package".into()));
+        assert_eq!(
+            extract_dep_name("my-package>=1.0"),
+            Some("my-package".into())
+        );
+        assert_eq!(
+            extract_dep_name("my_package>=1.0"),
+            Some("my-package".into())
+        );
     }
 
     #[test]
@@ -206,10 +217,7 @@ mod tests {
         assert_eq!(extract_dep_name(""), None);
         assert_eq!(extract_dep_name("# comment"), None);
         assert_eq!(extract_dep_name("-e ./local"), None);
-        assert_eq!(
-            extract_dep_name("requests @ https://example.com/pkg"),
-            None
-        );
+        assert_eq!(extract_dep_name("requests @ https://example.com/pkg"), None);
         assert_eq!(
             extract_dep_name("mypkg ; python_version >= '3.8'"),
             Some("mypkg".into())

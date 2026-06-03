@@ -85,11 +85,17 @@ fn handle_list(cli: &Cli) -> Result<(), i32> {
     }
 
     if cli.json {
-        println!("{}", json::success(serde_json::json!({ "languages": &entries })));
+        println!(
+            "{}",
+            json::success(serde_json::json!({ "languages": &entries }))
+        );
     } else {
         eprintln!("{}", t!("i18n.list.header"));
         for e in &entries {
-            println!("  {:<8} {:<16} {} ({} keys)", e.code, e.language, e.source, e.key_count);
+            println!(
+                "  {:<8} {:<16} {} ({} keys)",
+                e.code, e.language, e.source, e.key_count
+            );
         }
         if external.is_empty() {
             eprintln!("{}", t!("i18n.list.none"));
@@ -101,10 +107,20 @@ fn handle_list(cli: &Cli) -> Result<(), i32> {
 
 /// 校验语言代码只包含安全字符，防止路径遍历和 URL 注入。
 fn validate_lang_code(lang: &str) -> Result<(), &'static str> {
-    if lang.is_empty() || lang.contains('.') || lang.contains('/') || lang.contains('\\') || lang.contains(':') || lang.contains('?') || lang.contains('#') {
+    if lang.is_empty()
+        || lang.contains('.')
+        || lang.contains('/')
+        || lang.contains('\\')
+        || lang.contains(':')
+        || lang.contains('?')
+        || lang.contains('#')
+    {
         return Err("invalid language code");
     }
-    if !lang.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+    if !lang
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
         return Err("invalid language code");
     }
     Ok(())
@@ -223,7 +239,10 @@ mod tests {
 
     #[test]
     fn download_mock_returns_content() {
-        std::env::set_var("PYFORGE_I18N_MOCK", r#"{"meta":{"language":"test"},"strings":{"k":"v"}}"#);
+        std::env::set_var(
+            "PYFORGE_I18N_MOCK",
+            r#"{"meta":{"language":"test"},"strings":{"k":"v"}}"#,
+        );
         let result = download("http://unused");
         std::env::remove_var("PYFORGE_I18N_MOCK");
         assert!(result.is_ok());

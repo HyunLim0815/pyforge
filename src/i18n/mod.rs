@@ -3,9 +3,9 @@
 //! 所有用户可见字符串通过 `t!()` 宏输出，集中管理，禁止内联。
 //! [Source: architecture.md §i18n Message Pattern]
 
+mod en;
 pub mod loader;
 mod zh;
-mod en;
 
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Mutex;

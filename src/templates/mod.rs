@@ -53,10 +53,7 @@ pub fn render(template: &str, project_name: &str, dest: &Path) -> Result<(), Tem
 fn warn_if_custom_shadowed(template: &str) {
     let custom_root = custom_template_root().join(template);
     if custom_root.exists() {
-        eprintln!(
-            "{}",
-            crate::t!("template.custom_shadowed", template)
-        );
+        eprintln!("{}", crate::t!("template.custom_shadowed", template));
     }
 }
 
@@ -129,17 +126,36 @@ fn apply_vars(input: &str, project_name: &str) -> String {
 }
 
 const FASTAPI_FILES: &[(&str, &str)] = &[
-    ("app/main.py", include_str!("../../templates/fastapi/app/main.py")),
-    ("app/routers/__init__.py", include_str!("../../templates/fastapi/app/routers/__init__.py")),
-    ("app/models/__init__.py", include_str!("../../templates/fastapi/app/models/__init__.py")),
-    ("tests/__init__.py", include_str!("../../templates/fastapi/tests/__init__.py")),
+    (
+        "app/main.py",
+        include_str!("../../templates/fastapi/app/main.py"),
+    ),
+    (
+        "app/routers/__init__.py",
+        include_str!("../../templates/fastapi/app/routers/__init__.py"),
+    ),
+    (
+        "app/models/__init__.py",
+        include_str!("../../templates/fastapi/app/models/__init__.py"),
+    ),
+    (
+        "tests/__init__.py",
+        include_str!("../../templates/fastapi/tests/__init__.py"),
+    ),
 ];
 
-const CLI_FILES: &[(&str, &str)] = &[
-    ("src/main.py", include_str!("../../templates/cli/src/main.py")),
-];
+const CLI_FILES: &[(&str, &str)] = &[(
+    "src/main.py",
+    include_str!("../../templates/cli/src/main.py"),
+)];
 
 const LIB_FILES: &[(&str, &str)] = &[
-    ("src/__init__.py", include_str!("../../templates/lib/src/__init__.py")),
-    ("src/{{name}}.py", include_str!("../../templates/lib/src/{{name}}.py")),
+    (
+        "src/__init__.py",
+        include_str!("../../templates/lib/src/__init__.py"),
+    ),
+    (
+        "src/{{name}}.py",
+        include_str!("../../templates/lib/src/{{name}}.py"),
+    ),
 ];

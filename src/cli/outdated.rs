@@ -54,10 +54,7 @@ pub fn handle(cli: &Cli, args: &OutdatedArgs) -> Result<(), i32> {
 
     if projects.is_empty() {
         if cli.json {
-            println!(
-                "{}",
-                json::success(serde_json::json!({ "projects": [] }))
-            );
+            println!("{}", json::success(serde_json::json!({ "projects": [] })));
         }
         eprintln!("{}", t!("status.empty"));
         return Ok(());

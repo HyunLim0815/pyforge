@@ -32,10 +32,25 @@ pub fn handle(cli: &Cli, args: &InfoArgs) -> Result<(), i32> {
     } else {
         println!("name: {}", project.name);
         println!("path: {}", project.path);
-        println!("python_version: {}", project.python_version.unwrap_or_else(|| "unknown".into()));
-        println!("git_status: {}", project.git_status.unwrap_or_else(|| "unknown".into()));
-        println!("last_modified: {}", project.last_modified.unwrap_or_else(|| "unknown".into()));
-        println!("deps_count: {}", project.deps_count.map(|n| n.to_string()).unwrap_or_else(|| "unknown".into()));
+        println!(
+            "python_version: {}",
+            project.python_version.unwrap_or_else(|| "unknown".into())
+        );
+        println!(
+            "git_status: {}",
+            project.git_status.unwrap_or_else(|| "unknown".into())
+        );
+        println!(
+            "last_modified: {}",
+            project.last_modified.unwrap_or_else(|| "unknown".into())
+        );
+        println!(
+            "deps_count: {}",
+            project
+                .deps_count
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "unknown".into())
+        );
     }
     Ok(())
 }

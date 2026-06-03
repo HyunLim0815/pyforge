@@ -25,7 +25,10 @@ pub fn handle(cli: &Cli, args: &InitAgentArgs) -> Result<(), i32> {
 
     // 先确保 ~/.pyforge/SKILL.md 存在
     match skill::ensure_skill_md() {
-        Ok(true) => eprintln!("{}", t!("agent.skill_written", skill::default_skill_path().display())),
+        Ok(true) => eprintln!(
+            "{}",
+            t!("agent.skill_written", skill::default_skill_path().display())
+        ),
         Ok(false) => {}
         Err(e) => {
             eprintln!("{}", e);
@@ -42,11 +45,7 @@ pub fn handle(cli: &Cli, args: &InitAgentArgs) -> Result<(), i32> {
 
         // 交互确认（Plain 模式且未 --yes）
         if !cli.json && !args.yes {
-            eprintln!(
-                "{} → {}? [Y/n]",
-                target.name,
-                dest.display()
-            );
+            eprintln!("{} → {}? [Y/n]", target.name, dest.display());
             let mut input = String::new();
             if std::io::stdin().read_line(&mut input).is_ok() {
                 let trimmed = input.trim();
@@ -63,7 +62,11 @@ pub fn handle(cli: &Cli, args: &InitAgentArgs) -> Result<(), i32> {
 
         match skill::copy_to_target(target) {
             Ok(skill::CopyResult::Written(p)) => {
-                eprintln!("{}: {}", t!("agent.skill_written", p.display()), target.name);
+                eprintln!(
+                    "{}: {}",
+                    t!("agent.skill_written", p.display()),
+                    target.name
+                );
                 results.push(InstallResult {
                     target: target.name.to_string(),
                     path: p.display().to_string(),

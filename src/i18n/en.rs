@@ -49,7 +49,9 @@ pub fn get(key: &str) -> Option<String> {
 
         // template
         "template.unknown" => "Unknown template: {0}. Available templates: {1}".to_string(),
-        "template.custom_shadowed" => "Custom template '{0}' shadows a built-in template, using built-in".to_string(),
+        "template.custom_shadowed" => {
+            "Custom template '{0}' shadows a built-in template, using built-in".to_string()
+        }
 
         // i18n
         "i18n.list.header" => "Available languages:".to_string(),

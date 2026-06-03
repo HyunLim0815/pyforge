@@ -27,7 +27,12 @@ pub struct NewArgs {
 
 /// 校验项目名不包含路径遍历组件。
 fn validate_project_name(name: &str) -> Result<(), &'static str> {
-    if name.is_empty() || name.contains("..") || name.contains('/') || name.contains('\\') || name.contains(':') {
+    if name.is_empty()
+        || name.contains("..")
+        || name.contains('/')
+        || name.contains('\\')
+        || name.contains(':')
+    {
         return Err("invalid project name");
     }
     Ok(())
@@ -92,7 +97,9 @@ pub fn handle(cli: &Cli, args: &NewArgs) -> Result<(), i32> {
         }
     }
 
-    let canonical = project_path.canonicalize().unwrap_or_else(|_| project_path.clone());
+    let canonical = project_path
+        .canonicalize()
+        .unwrap_or_else(|_| project_path.clone());
     let mut project_json = None;
 
     if !args.no_track {

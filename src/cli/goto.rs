@@ -35,7 +35,10 @@ pub fn handle(cli: &Cli, args: &GotoArgs) -> Result<(), i32> {
     };
 
     if cli.json {
-        println!("{}", json::success(serde_json::json!({ "path": project.path })));
+        println!(
+            "{}",
+            json::success(serde_json::json!({ "path": project.path }))
+        );
     } else {
         println!("{}", project.path);
     }

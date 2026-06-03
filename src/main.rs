@@ -4,13 +4,13 @@
 
 mod agent;
 mod cli;
+mod i18n;
 #[allow(dead_code)]
 mod index;
-mod i18n;
 mod output;
 mod system;
-mod uv;
 mod templates;
+mod uv;
 mod web;
 
 use clap::Parser;

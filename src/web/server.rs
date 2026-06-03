@@ -1,4 +1,9 @@
-use axum::{response::{Html, Response}, routing::{get, post}, Router, body::Body};
+use axum::{
+    body::Body,
+    response::{Html, Response},
+    routing::{get, post},
+    Router,
+};
 use std::net::SocketAddr;
 
 use super::routes::{dependencies, open, projects, stats};
@@ -16,14 +21,20 @@ pub async fn run(port: u16, open_browser: bool) -> Result<(), Box<dyn std::error
     let app = Router::new()
         .route("/", get(|| async { Html(DASHBOARD_HTML) }))
         .route("/projects", get(|| async { Html(PROJECTS_HTML) }))
-        .route("/project/:name", get(|| async { Html(PROJECT_DETAIL_HTML) }))
+        .route(
+            "/project/:name",
+            get(|| async { Html(PROJECT_DETAIL_HTML) }),
+        )
         .route("/dependencies", get(|| async { Html(DEPENDENCIES_HTML) }))
-        .route("/i18n.js", get(|| async {
-            Response::builder()
-                .header("Content-Type", "application/javascript; charset=utf-8")
-                .body(Body::from(I18N_JS))
-                .unwrap()
-        }))
+        .route(
+            "/i18n.js",
+            get(|| async {
+                Response::builder()
+                    .header("Content-Type", "application/javascript; charset=utf-8")
+                    .body(Body::from(I18N_JS))
+                    .unwrap()
+            }),
+        )
         .route("/api/stats", get(stats::get_stats))
         .route("/api/projects", get(projects::get_projects))
         .route("/api/projects/:name", get(projects::get_project_by_name))

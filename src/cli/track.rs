@@ -35,11 +35,16 @@ pub fn handle(cli: &Cli, args: &TrackArgs) -> Result<(), i32> {
         return Err(1);
     }
 
-    let canonical = args.path.canonicalize().unwrap_or_else(|_| args.path.clone());
-    let name = args
-        .name
-        .clone()
-        .unwrap_or_else(|| canonical.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_else(|| "unknown".to_string()));
+    let canonical = args
+        .path
+        .canonicalize()
+        .unwrap_or_else(|_| args.path.clone());
+    let name = args.name.clone().unwrap_or_else(|| {
+        canonical
+            .file_name()
+            .map(|f| f.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string())
+    });
 
     // 打开索引（支持 PYFORGE_INDEX_PATH 环境变量注入）
     let index_path = std::env::var("PYFORGE_INDEX_PATH")
@@ -76,10 +81,7 @@ pub fn handle(cli: &Cli, args: &TrackArgs) -> Result<(), i32> {
         Ok(()) => {
             let msg = t!("track.success", &name);
             if cli.json {
-                println!(
-                    "{}",
-                    json::success(serde_json::json!({ "project": &info }))
-                );
+                println!("{}", json::success(serde_json::json!({ "project": &info })));
             }
             eprintln!("{}", msg);
             Ok(())
@@ -112,18 +114,31 @@ fn epoch_secs_to_iso8601(secs: u64) -> String {
     let mut remaining = days;
     loop {
         let days_in_year = if is_leap_year(y) { 366 } else { 365 };
-        if remaining < days_in_year { break; }
+        if remaining < days_in_year {
+            break;
+        }
         remaining -= days_in_year;
         y += 1;
     }
     let month_days: [u64; 12] = [
         31,
         if is_leap_year(y) { 29 } else { 28 },
-        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
     ];
     let mut mo = 1u64;
     for &md in &month_days {
-        if remaining < md { break; }
+        if remaining < md {
+            break;
+        }
         remaining -= md;
         mo += 1;
     }
@@ -144,14 +159,13 @@ fn chrono_now() -> String {
 }
 
 fn modified_time(path: &PathBuf) -> Option<String> {
-    std::fs::metadata(path)
-        .ok()?
-        .modified()
-        .ok()
-        .map(|t| {
-            let secs = t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
-            epoch_secs_to_iso8601(secs)
-        })
+    std::fs::metadata(path).ok()?.modified().ok().map(|t| {
+        let secs = t
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        epoch_secs_to_iso8601(secs)
+    })
 }
 
 fn git_info(path: &PathBuf) -> (Option<String>, Option<String>, Option<String>) {
@@ -168,10 +182,7 @@ fn git_info(path: &PathBuf) -> (Option<String>, Option<String>, Option<String>) 
             let status = {
                 let mut opts = git2::StatusOptions::new();
                 opts.include_untracked(false);
-                let count = repo
-                    .statuses(Some(&mut opts))
-                    .map(|s| s.len())
-                    .unwrap_or(0);
+                let count = repo.statuses(Some(&mut opts)).map(|s| s.len()).unwrap_or(0);
                 if count == 0 {
                     Some("clean".into())
                 } else {

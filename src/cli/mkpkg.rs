@@ -25,7 +25,11 @@ pub struct MkpkgArgs {
 /// 校验包名不包含路径遍历组件。
 fn validate_package_name(pkg: &str) -> Result<(), String> {
     for component in pkg.split('.') {
-        if component.is_empty() || component == ".." || component.contains('/') || component.contains('\\') {
+        if component.is_empty()
+            || component == ".."
+            || component.contains('/')
+            || component.contains('\\')
+        {
             return Err(format!("invalid package name: {}", pkg));
         }
     }
@@ -115,9 +119,7 @@ pub fn handle(cli: &Cli, args: &MkpkgArgs) -> Result<(), i32> {
 
 /// 对于 `a.b.c` 这样的嵌套包，为中间层级也创建 `__init__.py`。
 fn create_intermediate_inits(base: &Path, rel_path: &str) -> Result<(), i32> {
-    let components: Vec<&str> = rel_path
-        .split(std::path::MAIN_SEPARATOR)
-        .collect();
+    let components: Vec<&str> = rel_path.split(std::path::MAIN_SEPARATOR).collect();
 
     // 中间层级（不含最后一层，最后一层由调用方处理）
     for i in 0..components.len().saturating_sub(1) {

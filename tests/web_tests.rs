@@ -271,11 +271,7 @@ fn theme_toggle_in_all_pages() {
             "{} 应包含 data-theme 属性操作",
             name
         );
-        assert!(
-            html.contains("themeToggle"),
-            "{} 应包含主题切换按钮",
-            name
-        );
+        assert!(html.contains("themeToggle"), "{} 应包含主题切换按钮", name);
     }
 }
 
@@ -288,7 +284,10 @@ fn theme_css_variables_in_all_pages() {
         include_str!("../src/web/dependencies.html"),
     ];
     for html in &pages {
-        assert!(html.contains(":root") && html.contains("--bg:"), "应定义暗色主题 CSS 变量");
+        assert!(
+            html.contains(":root") && html.contains("--bg:"),
+            "应定义暗色主题 CSS 变量"
+        );
         assert!(
             html.contains("[data-theme=\"light\"]"),
             "应定义亮色主题 CSS 变量"
@@ -339,11 +338,7 @@ fn i18n_js_loaded_in_all_pages() {
         ),
     ];
     for (name, html) in &pages {
-        assert!(
-            html.contains("src=\"/i18n.js\""),
-            "{} 应引用 i18n.js",
-            name
-        );
+        assert!(html.contains("src=\"/i18n.js\""), "{} 应引用 i18n.js", name);
         assert!(
             html.contains("PyForgeI18n.initI18n()"),
             "{} 应调用 initI18n()",
@@ -378,8 +373,16 @@ fn lang_toggle_in_all_pages() {
 #[test]
 fn data_i18n_attributes_in_all_pages() {
     let pages = [
-        ("dashboard.html", include_str!("../src/web/dashboard.html"), "dashboard.title"),
-        ("projects.html", include_str!("../src/web/projects.html"), "projects.title"),
+        (
+            "dashboard.html",
+            include_str!("../src/web/dashboard.html"),
+            "dashboard.title",
+        ),
+        (
+            "projects.html",
+            include_str!("../src/web/projects.html"),
+            "projects.title",
+        ),
         (
             "project_detail.html",
             include_str!("../src/web/project_detail.html"),
@@ -392,11 +395,7 @@ fn data_i18n_attributes_in_all_pages() {
         ),
     ];
     for (name, html, sample_key) in &pages {
-        assert!(
-            html.contains("data-i18n"),
-            "{} 应包含 data-i18n 属性",
-            name
-        );
+        assert!(html.contains("data-i18n"), "{} 应包含 data-i18n 属性", name);
         assert!(
             html.contains(sample_key),
             "{} 应包含翻译 key {}",
@@ -409,9 +408,15 @@ fn data_i18n_attributes_in_all_pages() {
 #[test]
 fn i18n_module_has_locale_detection() {
     let js = include_str!("../src/web/i18n.js");
-    assert!(js.contains("pyforge_locale"), "i18n.js 应使用 pyforge_locale localStorage key");
+    assert!(
+        js.contains("pyforge_locale"),
+        "i18n.js 应使用 pyforge_locale localStorage key"
+    );
     assert!(js.contains("getLocale"), "i18n.js 应包含 getLocale 函数");
-    assert!(js.contains("navigator.language"), "i18n.js 应检测 navigator.language");
+    assert!(
+        js.contains("navigator.language"),
+        "i18n.js 应检测 navigator.language"
+    );
 }
 
 #[test]
@@ -420,13 +425,19 @@ fn i18n_module_has_translations() {
     assert!(js.contains("'zh'"), "i18n.js 应包含中文翻译");
     assert!(js.contains("'en'"), "i18n.js 应包含英文翻译");
     assert!(js.contains("applyI18n"), "i18n.js 应包含 applyI18n 函数");
-    assert!(js.contains("localeChanged"), "i18n.js 应触发 localeChanged 事件");
+    assert!(
+        js.contains("localeChanged"),
+        "i18n.js 应触发 localeChanged 事件"
+    );
 }
 
 #[test]
 fn i18n_module_exports_api() {
     let js = include_str!("../src/web/i18n.js");
-    assert!(js.contains("PyForgeI18n"), "i18n.js 应导出 PyForgeI18n 全局对象");
+    assert!(
+        js.contains("PyForgeI18n"),
+        "i18n.js 应导出 PyForgeI18n 全局对象"
+    );
     assert!(js.contains("getLocale:"), "i18n.js 应导出 getLocale");
     assert!(js.contains("t:"), "i18n.js 应导出 t 翻译函数");
     assert!(js.contains("applyI18n:"), "i18n.js 应导出 applyI18n");

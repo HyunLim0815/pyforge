@@ -108,9 +108,7 @@ pub fn outdated(project_path: &Path) -> Result<Vec<OutdatedDep>, UvError> {
     // Test mock path
     match std::env::var("PYFORGE_UV_MOCK").as_deref() {
         Ok("outdated_clean") => return Ok(vec![]),
-        Ok("outdated_parse_error") => {
-            return Err(UvError::ParseError("mock parse failure".into()))
-        }
+        Ok("outdated_parse_error") => return Err(UvError::ParseError("mock parse failure".into())),
         Ok("missing") => return Err(UvError::NotInstalled),
         Ok(mock) if mock.starts_with("outdated:") => {
             let csv = &mock["outdated:".len()..];
@@ -191,10 +189,7 @@ fn parse_outdated_output(output: &str) -> Result<Vec<OutdatedDep>, UvError> {
         }
         let parts: Vec<&str> = trimmed.split_whitespace().collect();
         if parts.len() < 3 {
-            return Err(UvError::ParseError(format!(
-                "无法解析行: {}",
-                trimmed
-            )));
+            return Err(UvError::ParseError(format!("无法解析行: {}", trimmed)));
         }
         deps.push(OutdatedDep {
             name: parts[0].to_string(),

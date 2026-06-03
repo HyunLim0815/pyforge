@@ -203,7 +203,9 @@ mod tests {
             .filter(|p| p.toolchain.as_deref() == Some(toolchain))
             .collect();
         assert_eq!(filtered.len(), 2);
-        assert!(filtered.iter().all(|p| p.toolchain.as_deref() == Some("uv")));
+        assert!(filtered
+            .iter()
+            .all(|p| p.toolchain.as_deref() == Some("uv")));
     }
 
     #[test]
