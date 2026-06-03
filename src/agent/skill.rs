@@ -80,6 +80,7 @@ pub enum CopyResult {
 }
 
 /// 将 SKILL.md 写入指定路径（测试用）。
+#[allow(dead_code)]
 pub fn write_to(path: &Path) -> Result<(), std::io::Error> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;

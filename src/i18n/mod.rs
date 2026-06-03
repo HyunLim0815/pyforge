@@ -52,6 +52,7 @@ pub fn current_lang() -> u8 {
 }
 
 /// 获取当前语言代码。
+#[allow(dead_code)]
 pub fn current_lang_code() -> String {
     safe_lock(&LANG_CODE).clone()
 }

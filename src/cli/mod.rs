@@ -22,7 +22,6 @@ mod init_agent;
 mod web;
 
 use crate::output::OutputFormat;
-use crate::t;
 use clap::{CommandFactory, Parser, Subcommand};
 use clap_complete::Shell;
 
