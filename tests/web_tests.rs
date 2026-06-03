@@ -90,7 +90,7 @@ fn extract_dep_name(spec: &str) -> Option<String> {
         s
     };
     let end = s
-        .find(|c: char| c == '>' || c == '<' || c == '=' || c == '!' || c == '~' || c == '[')
+        .find(|c: char| ['>', '<', '=', '!', '~', '['].contains(&c))
         .unwrap_or(s.len());
     let name = s[..end].trim();
     if name.is_empty() {

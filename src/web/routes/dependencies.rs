@@ -175,7 +175,7 @@ fn extract_dep_name(spec: &str) -> Option<String> {
     };
     // 提取包名：在第一个版本限定符处截断
     let end = s
-        .find(|c: char| c == '>' || c == '<' || c == '=' || c == '!' || c == '~' || c == '[')
+        .find(|c: char| ['>', '<', '=', '!', '~', '['].contains(&c))
         .unwrap_or(s.len());
     let name = s[..end].trim();
     if name.is_empty() {
