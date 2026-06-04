@@ -18,3 +18,10 @@ Thumbs.db
 
 # 运行时数据（本地开发可能出现在仓库根目录）
 .pyforge/
+
+# Python / maturin
+*.egg-info/
+dist/
+__pycache__/
+*.pyc
+.venv/

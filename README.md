@@ -16,6 +16,12 @@ PyForge 是一个 Rust 编写的 CLI 工具，用于管理本地 Python 项目�
 
 ## 安装
 
+### pip 安装（推荐）
+
+```bash
+pip install pyforge
+```
+
 ### 从源码编译
 
 ```bash
@@ -156,7 +162,7 @@ pyforge agent-info --json
 # 列出可用语言
 pyforge i18n list
 
-# 安装日语语言包
+# 安装日语语言包（示例）
 pyforge i18n install ja
 
 # 使用英文输出

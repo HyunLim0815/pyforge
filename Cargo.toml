@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "PyForge — Python 项目管家，uv 的强力补充"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourname/pyforge"
+repository = "https://github.com/HyunLim0815/pyforge"
 readme = "README.md"
 rust-version = "1.89"
 
