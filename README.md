@@ -258,4 +258,4 @@ src/
 
 ## 许可证
 
-MIT OR Apache-2.0
+Apache-2.0
