@@ -19,7 +19,7 @@ PyForge 是一个 Rust 编写的 CLI 工具，用于管理本地 Python 项目�
 ### pip 安装（推荐）
 
 ```bash
-pip install forgepy
+pip install pyproject-manager
 ```
 
 ### 从源码编译
